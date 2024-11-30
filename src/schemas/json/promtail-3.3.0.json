@@ -1,0 +1,503 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://json.schemastore.org/promtail-3.3.json",
+  "description": "Promtail configurations.",
+  "title": "Promtail Configuration",
+  "type": "object",
+  "required": [
+    "clients",
+    "scrape_configs"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "global": {
+      "$ref": "#/definitions/global"
+    },
+    "server": {
+      "$ref": "#/definitions/server"
+    },
+    "clients": {
+      "$ref": "#/definitions/clients"
+    },
+    "positions": {
+      "$ref": "#/definitions/positions"
+    },
+    "scrape_configs": {
+      "$ref": "#/definitions/scrape_config"
+    },
+    "limits_config": {
+      "$ref": "#/definitions/limits_config"
+    },
+    "target_config": {
+      "$ref": "#/definitions/target_config"
+    },
+    "options_config": {
+      "$ref": "#/definitions/options_config"
+    },
+    "tracing": {
+      "$ref": "#/definitions/tracing_config"
+    }
+  },
+  "definitions": {
+    "todo": {
+      "description": "Schema Incomplete",
+      "title": "TODO"
+    },
+    "global": {
+      "description": "Configures global settings which impact all targets.",
+      "title": "Global",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "file_watch_config": {
+          "$ref": "#/definitions/file_watch_config"
+        }
+      }
+    },
+    "file_watch_config": {
+      "description": "Configure how frequently log files from disk get polled for changes.",
+      "title": "File Watch Config",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "min_poll_frequency": {
+          "$ref": "#/definitions/duration",
+          "default": "250ms"
+        },
+        "max_poll_frequency": {
+          "$ref": "#/definitions/duration",
+          "default": "250ms"
+        }
+      }
+    },
+    "server": {
+      "description": "Configures the server for Promtail.",
+      "title": "Server",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "disable": {
+          "description": "Disable the HTTP and GRPC server.",
+          "title": "Disable",
+          "default": "false",
+          "type": "boolean"
+        },
+        "profiling_enabled": {
+          "description": "Enable the /debug/fgprof and /debug/pprof endpoints for profiling.",
+          "title": "Profiling Enable",
+          "default": "false",
+          "type": "boolean"
+        },
+        "http_listen_address": {
+          "description": "HTTP server listen host.",
+          "title": "Http Listen Address",
+          "type": "string"
+        },
+        "http_listen_port": {
+          "description": "HTTP server listen port (0 means random port).",
+          "title": "Http Listen Port",
+          "type": "integer",
+          "default": 80
+        },
+        "grpc_listen_address": {
+          "description": "gRPC server listen host.",
+          "title": "Grpc Listen Address",
+          "type": "string"
+        },
+        "grpc_listen_port": {
+          "description": "gRPC server listen port (0 means random port).",
+          "title": "Grpc Listen Port",
+          "type": "integer",
+          "default": 9095
+        },
+        "register_instrumentation": {
+          "description": "Register instrumentation handlers (/metrics, etc.).",
+          "title": "Register Instrumentation",
+          "type": "boolean",
+          "default": true
+        },
+        "graceful_shutdown_timeout": {
+          "description": "Timeout for graceful shutdowns.",
+          "title": "Graceful Shutdown Timeout",
+          "$ref": "#/definitions/duration",
+          "default": "30s"
+        },
+        "http_server_read_timeout": {
+          "description": "Read timeout for HTTP server.",
+          "title": "Http Server Read Timeout",
+          "$ref": "#/definitions/duration",
+          "default": "30s"
+        },
+        "http_server_write_timeout": {
+          "description": "Write timeout for HTTP server.",
+          "title": "Http Server Write Timeout",
+          "$ref": "#/definitions/duration",
+          "default": "30s"
+        },
+        "http_server_idle_timeout": {
+          "description": "Idle timeout for HTTP server.",
+          "title": "Http Server Idle Timeout",
+          "$ref": "#/definitions/duration",
+          "default": "120s"
+        },
+        "grpc_server_max_recv_msg_size": {
+          "description": "Max gRPC message size that can be received.",
+          "title": "Grpc Server Max Recv Msg Size",
+          "type": "integer",
+          "default": 4194304
+        },
+        "grpc_server_max_send_msg_size": {
+          "description": "Max gRPC message size that can be sent.",
+          "title": "Grpc Server Max Send Msg Size",
+          "type": "integer",
+          "default": 4194304
+        },
+        "grpc_server_max_concurrent_streams": {
+          "description": "Limit on the number of concurrent streams for gRPC calls (0 = unlimited).",
+          "title": "Grpc Server Max Concurrent Streams",
+          "type": "integer",
+          "default": 100
+        },
+        "log_level": {
+          "description": "Log only messages with the given severity or above. Supported values [debug, info, warn, error].",
+          "title": "Log Level",
+          "type": "string",
+          "default": "info"
+        },
+        "http_path_prefix": {
+          "description": "Base path to server all API routes from (e.g., /v1/).",
+          "title": "Http Path Prefix",
+          "type": "string"
+        },
+        "health_check_target": {
+          "description": "Target managers check flag for Promtail readiness, if set to false the check is ignored.",
+          "title": "Health Check Target",
+          "type": "boolean",
+          "default": true
+        },
+        "enable_runtime_reload": {
+          "description": "Enable reload via HTTP request.",
+          "title": "Enable Runtime Reload",
+          "type": "boolean",
+          "default": false
+        }
+      }
+    },
+    "clients": {
+      "description": "Describes how Promtail connects to multiple instances of Grafana Loki, sending logs to each.",
+      "title": "Clients",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/client"
+      }
+    },
+    "client": {
+      "$comment": "TODO https://grafana.com/docs/loki/latest/send-data/promtail/configuration/#clients",
+      "title": "Client",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "url": {
+          "description": "The URL where Loki is listening, denoted in Loki as http_listen_address and http_listen_port.",
+          "title": "URL",
+          "type": "string"
+        },
+        "headers": {
+          "$ref": "#/definitions/todo"
+        },
+        "tenant_id": {
+          "description": "The tenant ID used by default to push logs to Loki.",
+          "title": "Tenant Id",
+          "type": "string"
+        },
+        "batchwait": {
+          "description": "Maximum amount of time to wait before sending a batch, even if that batch isn't full.",
+          "title": "Batchwait",
+          "$ref": "#/definitions/duration",
+          "default": "1s"
+        },
+        "batchsize": {
+          "description": "Maximum batch size (in bytes) of logs to accumulate before sending the batch to Loki.",
+          "title": "Batchsize",
+          "$ref": "#/definitions/int",
+          "default": 1048576
+        },
+        "basic_auth": {
+          "$ref": "#/definitions/todo"
+        },
+        "oauth2": {
+          "$ref": "#/definitions/todo"
+        },
+        "bearer_token": {
+          "description": "Bearer token to send to the server.",
+          "title": "Bearer Token",
+          "type": "string"
+        },
+        "bearer_token_file": {
+          "description": "File containing bearer token to send to the server.",
+          "title": "Bearer Token File",
+          "type": "string"
+        },
+        "proxy_url": {
+          "description": "HTTP proxy server to use to connect to the server.",
+          "title": "Proxy URL",
+          "type": "string"
+        },
+        "tls_config": {
+          "$ref": "#/definitions/todo"
+        },
+        "backoff_config": {
+          "$ref": "#/definitions/todo"
+        },
+        "drop_rate_limited_batches": {
+          "description": "Disable retries of batches that Loki responds to with a 429 status code (TooManyRequests).",
+          "title": "Proxy URL",
+          "type": "boolean",
+          "default": false
+        },
+        "external_labels": {
+          "$ref": "#/definitions/todo"
+        },
+        "timeout": {
+          "description": "Maximum time to wait for a server to respond to a request.",
+          "title": "Timeout",
+          "$ref": "#/definitions/duration",
+          "default": "10s"
+        }
+      }
+    },
+    "positions": {
+      "description": "Describes how to save read file offsets to disk.",
+      "title": "Positions",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "filename": {
+          "description": "Location of positions file.",
+          "title": "File Name",
+          "type": "string",
+          "default": "/var/log/positions.yaml"
+        },
+        "sync_period": {
+          "description": "How often to update the positions file.",
+          "title": "Sync Period",
+          "$ref": "#/definitions/duration",
+          "default": "10s"
+        },
+        "ignore_invalid_yaml": {
+          "description": "Whether to ignore & later overwrite positions files that are corrupted.",
+          "title": "Ignore Invalid Yaml",
+          "type": "boolean",
+          "default": false
+        }
+      }
+    },
+    "scrape_config": {
+      "description": "Configures how Promtail can scrape logs from a series of targets.",
+      "title": "Scrape Configs",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "job_name": {
+          "description": "Name to identify this scrape config in the Promtail UI.",
+          "title": "Job Name",
+          "type": "string"
+        },
+        "pipeline_stages": {
+          "$ref": "#/definitions/todo"
+        },
+        "decompression": {
+          "description": "Defines decompression behavior for the given scrape target.",
+          "title": "decompression",
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "description": "Whether decompression should be tried or not.",
+              "title": "Enabled",
+              "type": "boolean",
+              "default": false
+            },
+            "initial_delay": {
+              "description": "Initial delay to wait before starting the decompression.",
+              "title": "Initial Delay",
+              "$ref": "#/definitions/duration",
+              "default": "0s"
+            },
+            "format": {
+              "description": "Compression format.",
+              "title": "Format",
+              "type": "string",
+              "enum": [
+                "gz",
+                "bz2",
+                "z"
+              ]
+            }
+          }
+        },
+        "journal": {
+          "$ref": "#/definitions/todo"
+        },
+        "encoding": {
+          "$ref": "#/definitions/todo"
+        },
+        "syslog": {
+          "$ref": "#/definitions/todo"
+        },
+        "loki_push_api": {
+          "$ref": "#/definitions/todo"
+        },
+        "windows_events": {
+          "$ref": "#/definitions/todo"
+        },
+        "gcplog": {
+          "$ref": "#/definitions/todo"
+        },
+        "azure_event_hub": {
+          "$ref": "#/definitions/todo"
+        },
+        "kafka": {
+          "$ref": "#/definitions/todo"
+        },
+        "gelf": {
+          "$ref": "#/definitions/todo"
+        },
+        "cloudflare": {
+          "$ref": "#/definitions/todo"
+        },
+        "heroku_drain": {
+          "$ref": "#/definitions/todo"
+        },
+        "relabel_configs": {
+          "$ref": "#/definitions/todo"
+        },
+        "static_configs": {
+          "$ref": "#/definitions/todo"
+        },
+        "file_sd_configs": {
+          "$ref": "#/definitions/todo"
+        },
+        "kubernetes_sd_configs": {
+          "$ref": "#/definitions/todo"
+        },
+        "consul_sd_configs": {
+          "$ref": "#/definitions/todo"
+        },
+        "consulagent_sd_configs": {
+          "$ref": "#/definitions/todo"
+        },
+        "docker_sd_configs": {
+          "$ref": "#/definitions/todo"
+        }
+      }
+    },
+    "limits_config": {
+      "description": "",
+      "title": "Limits Config",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "readline_rate_enabled": {
+          "description": "When true, enforces rate limiting on this instance of Promtail.",
+          "title": "Readline Rate Enable",
+          "type": "boolean",
+          "default": false
+        },
+        "readline_rate": {
+          "description": "The rate limit in log lines per second that this instance of Promtail may push to Loki.",
+          "title": "Readline Rate",
+          "#ref": "#/definitions/int",
+          "default": 10000
+        },
+        "readline_burst": {
+          "description": "The cap in the quantity of burst lines that this instance of Promtail may push to Loki.",
+          "title": "Readline Burst",
+          "#ref": "#/definitions/int",
+          "default": 10000
+        },
+        "readline_rate_drop": {
+          "description": "When true, exceeding the rate limit causes this instance of Promtail to discard log lines, rather than sending them to Loki. When false, exceeding the rate limit causes this instance of Promtail to temporarily hold off on sending the log lines and retry later.",
+          "title": "Readline Rate Drop",
+          "type": "boolean",
+          "default": true
+        },
+        "max_streams": {
+          "description": "Limits the max number of active streams.",
+          "title": "Max Streams",
+          "#ref": "#/definitions/int",
+          "default": 0
+        },
+        "max_line_size": {
+          "description": "Maximum log line byte size allowed without dropping. Example: 256kb, 2M. 0 to disable.",
+          "title": "Max Line Size",
+          "#ref": "#/definitions/int",
+          "default": 0
+        },
+        "max_line_size_truncate": {
+          "description": "Whether to truncate lines that exceed max_line_size. No effect if max_line_size is disabled.",
+          "title": "Max Line Size Truncate",
+          "type": "boolean",
+          "default": false
+        }
+      }
+    },
+    "target_config": {
+      "description": "Configures how tailed targets will be watched.",
+      "title": "Target Config",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "sync_period": {
+          "description": "Period to resync directories being watched and files being tailed to discover new ones or stop watching removed ones.",
+          "title": "Sync Period",
+          "$ref": "#/definitions/duration",
+          "default": "10s"
+        }
+      }
+    },
+    "options_config": {
+      "$comment": "Missing details on the documentation, might be called simply 'option'",
+      "description": "",
+      "title": "Options Config",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {}
+    },
+    "tracing_config": {
+      "description": "Configures tracing support for Jaeger",
+      "title": "Tracing Config",
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "title": "Enabled",
+          "type": "boolean",
+          "default": false
+        }
+      }
+    },
+    "int": {
+      "description": "Integer.",
+      "title": "Integer",
+      "type": "integer",
+      "pattern": "[1-9]+[0-9]*"
+    },
+    "duration": {
+      "description": "Duration.",
+      "title": "Duration",
+      "type": "string",
+      "pattern": "[0-9]+(ms|[smhdwy])"
+    },
+    "labelname": {
+      "description": "Label name.",
+      "title": "Label Name",
+      "type": "string",
+      "pattern": "[a-zA-Z_][a-zA-Z0-9_]*"
+    },
+    "labelvalue": {
+      "description": "Label value.",
+      "title": "Label Value",
+      "type": "string"
+    }
+  }
+}
