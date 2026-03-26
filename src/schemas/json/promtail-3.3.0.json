@@ -23,7 +23,7 @@
       "$ref": "#/definitions/positions"
     },
     "scrape_configs": {
-      "$ref": "#/definitions/scrape_config"
+      "$ref": "#/definitions/scrape_configs"
     },
     "limits_config": {
       "$ref": "#/definitions/limits_config"
@@ -203,7 +203,17 @@
           "type": "string"
         },
         "headers": {
-          "$ref": "#/definitions/todo"
+          "description": "Custom HTTP headers to be sent along with each push request.",
+          "title": "HTTP headers",
+          "type": "object",
+          "additionalProperties": false,
+          "patternProperties": {
+            "[a-zA-Z_][a-zA-Z0-9_]*": {
+              "description": "HTTP Header.",
+              "title": "HTTP Header",
+              "$ref": "#/definitions/labelvalue"
+            }
+          }
         },
         "tenant_id": {
           "description": "The tenant ID used by default to push logs to Loki.",
@@ -223,7 +233,27 @@
           "default": 1048576
         },
         "basic_auth": {
-          "$ref": "#/definitions/todo"
+          "description": "If using basic auth, configures the username and password sent.",
+          "title": "Basic Auth",
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "username": {
+              "description": "The username to use for basic auth.",
+              "title": "Username",
+              "type": "string"
+            },
+            "password": {
+              "description": "The password to use for basic auth.",
+              "title": "Password",
+              "type": "string"
+            },
+            "password_file": {
+              "description": "The file containing the password for basic auth.",
+              "title": "Password File",
+              "$ref": "#/definitions/filename"
+            }
+          }
         },
         "oauth2": {
           "$ref": "#/definitions/todo"
@@ -292,6 +322,14 @@
         }
       }
     },
+    "scrape_configs": {
+      "description": "Configures how Promtail can scrape logs from a series of targets.",
+      "title": "Scrape Configs",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/scrape_config"
+      }
+    },
     "scrape_config": {
       "description": "Configures how Promtail can scrape logs from a series of targets.",
       "title": "Scrape Configs",
@@ -304,7 +342,7 @@
           "type": "string"
         },
         "pipeline_stages": {
-          "$ref": "#/definitions/todo"
+          "$ref": "#/definitions/pipeline_stages"
         },
         "decompression": {
           "description": "Defines decompression behavior for the given scrape target.",
@@ -373,7 +411,53 @@
           "$ref": "#/definitions/todo"
         },
         "static_configs": {
-          "$ref": "#/definitions/todo"
+          "description": "Static targets to scrape.",
+          "title": "Static Configs",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "targets": {
+                "title": "Targets",
+                "description": "Configures the discovery to look on the current machine. This is required by the prometheus service discovery code but doesn't really apply to Promtail which can ONLY look at files on the local machine. As such it should only have the value of localhost, OR it can be excluded entirely and a default value of localhost will be applied by Promtail.",
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "const": "localhost"
+                }
+              },
+              "labels": {
+                "description": "Defines a file to scrape and an optional set of additional labels to apply to all streams defined by the files from __path__.",
+                "title": "Lables",
+                "type": "object",
+                "required": [
+                  "__path__"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "__path__": {
+                    "description": "The path to load logs from. Can use glob patterns (e.g., /var/log/*.log).",
+                    "title": "Path",
+                    "type": "string",
+                    "default": "/var/log/*.log"
+                  },
+                  "__path_exclude__": {
+                    "description": "Used to exclude files from being loaded. Can also use glob patterns.",
+                    "title": "Path Exclude",
+                    "type": "string"
+                  }
+                },
+                "patternProperties": {
+                  "[a-zA-Z_][a-zA-Z0-9_]*": {
+                    "description": "Additional labels to assign to the logs",
+                    "title": "Additional Label",
+                    "$ref": "#/definitions/labelvalue"
+                  }
+                }
+              }
+            }
+          }
         },
         "file_sd_configs": {
           "$ref": "#/definitions/todo"
@@ -407,13 +491,13 @@
         "readline_rate": {
           "description": "The rate limit in log lines per second that this instance of Promtail may push to Loki.",
           "title": "Readline Rate",
-          "#ref": "#/definitions/int",
+          "$ref": "#/definitions/int",
           "default": 10000
         },
         "readline_burst": {
           "description": "The cap in the quantity of burst lines that this instance of Promtail may push to Loki.",
           "title": "Readline Burst",
-          "#ref": "#/definitions/int",
+          "$ref": "#/definitions/int",
           "default": 10000
         },
         "readline_rate_drop": {
@@ -425,13 +509,13 @@
         "max_streams": {
           "description": "Limits the max number of active streams.",
           "title": "Max Streams",
-          "#ref": "#/definitions/int",
+          "$ref": "#/definitions/int",
           "default": 0
         },
         "max_line_size": {
           "description": "Maximum log line byte size allowed without dropping. Example: 256kb, 2M. 0 to disable.",
           "title": "Max Line Size",
-          "#ref": "#/definitions/int",
+          "$ref": "#/definitions/int",
           "default": 0
         },
         "max_line_size_truncate": {
@@ -476,6 +560,268 @@
         }
       }
     },
+    "pipeline_stages": {
+      "description": "Describes how to transform logs from targets.",
+      "title": "Pipeline Stages",
+      "type": "array",
+      "items": {
+        "description": "Pipeline stage.",
+        "title": "Pipeline Stage",
+        "type": "object",
+        "additionalProperties": false,
+        "maxProperties": 1,
+        "properties": {
+          "docker": {
+            "$ref": "#/definitions/pipeline_stage_docker"
+          },
+          "cri": {
+            "$ref": "#/definitions/pipeline_stage_cri"
+          },
+          "regex": {
+            "$ref": "#/definitions/pipeline_stage_regex"
+          },
+          "json": {
+            "$ref": "#/definitions/pipeline_stage_json"
+          },
+          "template": {
+            "$ref": "#/definitions/pipeline_stage_template"
+          },
+          "match": {
+            "$ref": "#/definitions/pipeline_stage_match"
+          },
+          "timestamp": {
+            "$ref": "#/definitions/pipeline_stage_timestamp"
+          },
+          "output": {
+            "$ref": "#/definitions/pipeline_stage_output"
+          },
+          "labels": {
+            "$ref": "#/definitions/pipeline_stage_labels"
+          },
+          "metrics": {
+            "$ref": "#/definitions/pipeline_stage_metrics"
+          },
+          "tenant": {
+            "$ref": "#/definitions/pipeline_stage_tenant"
+          },
+          "replace": {
+            "$ref": "#/definitions/pipeline_stage_replace"
+          }
+        }
+      }
+    },
+    "pipeline_stage_docker": {
+      "description": "Parses the contents of logs from Docker containers.",
+      "title": "Docker",
+      "type": "object",
+      "additionalProperties": false,
+      "maxProperties": 0,
+      "minProperties": 0,
+      "properties": {}
+    },
+    "pipeline_stage_cri": {
+      "description": "Parses the contents of logs from CRI containers.",
+      "title": "Cri",
+      "type": "object",
+      "additionalProperties": false,
+      "maxProperties": 0,
+      "minProperties": 0,
+      "properties": {}
+    },
+    "pipeline_stage_regex": {
+      "description": "takes a regular expression and extracts captured named groups to be used in further stages.",
+      "title": "Regex",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "expression"
+      ],
+      "properties": {
+        "expression": {
+          "description": "The RE2 regular expression. Each capture group must be named.",
+          "title": "Expression",
+          "type": "string"
+        },
+        "source": {
+          "description": "Name from extracted data to parse. If empty, uses the log message.",
+          "title": "Source",
+          "type": "string"
+        }
+      }
+    },
+    "pipeline_stage_json": {
+      "description": "Parses a log line as JSON and takes JMESPath expressions to extract data from the JSON to be used in further stages.",
+      "title": "Json",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "expressions"
+      ],
+      "properties": {
+        "expressions": {
+          "description": "Set of key/value pairs of JMESPath expressions. The key will be the key in the extracted data while the expression will be the value, evaluated as a JMESPath from the source data.",
+          "title": "Expressions",
+          "type": "array",
+          "items": {
+            "title": "Expression",
+            "additionalProperties": false,
+            "type": "object",
+            "patternProperties": {
+              ".+": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "source": {
+          "description": "Name from extracted data to parse. If empty, uses the log message.",
+          "title": "Source",
+          "type": "string"
+        }
+      }
+    },
+    "pipeline_stage_template": {
+      "description": "Uses Go's text/template language to manipulate values.",
+      "title": "Template",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "source": {
+          "description": "Name from extracted data to parse. If key in extract data doesn't exist, an entry for it will be created.",
+          "title": "Source",
+          "type": "string"
+        },
+        "template": {
+          "description": "Go template string to use. In additional to normal template functions, ToLower, ToUpper, Replace, Trim, TrimLeft, TrimRight, TrimPrefix, TrimSuffix, and TrimSpace are available as functions.",
+          "title": "Template",
+          "type": "string"
+        }
+      }
+    },
+    "pipeline_stage_match": {
+      "description": "Conditionally executes a set of stages when a log entry matches a configurable LogQL stream selector.",
+      "title": "Match",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "selector"
+      ],
+      "properties": {
+        "selector": {
+          "description": "LogQL stream selector.",
+          "title": "Selector",
+          "type": "string"
+        },
+        "pipeline_name": {
+          "description": "Names the pipeline.",
+          "title": "Pipeline Name",
+          "type": "string"
+        },
+        "stages": {
+          "description": "Nested set of pipeline stages only if the selector matches the labels of the log entries.",
+          "title": "Stages",
+          "$ref": "#/definitions/pipeline_stages"
+        }
+      }
+    },
+    "pipeline_stage_timestamp": {
+      "description": "",
+      "title": "Timestamp",
+      "type": "object",
+      "required": [
+        "source",
+        "format"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "source": {
+          "description": "Name from extracted data to use for the timestamp.",
+          "title": "Source",
+          "type": "string"
+        },
+        "format": {
+          "description": "Determines how to parse the time string. Can use pre-defined formats by name: [ANSIC UnixDate RubyDate RFC822 RFC822Z RFC850 RFC1123 RFC1123Z RFC3339 RFC3339Nano Unix UnixMs UnixUs UnixNs].",
+          "title": "Format",
+          "type": "string"
+        },
+        "location": {
+          "description": "IANA Timezone Database string.",
+          "title": "Location",
+          "type": "string"
+        }
+      }
+    },
+    "pipeline_stage_output": {
+      "description": "",
+      "title": "Output",
+      "type": "object",
+      "required": [
+        "source"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "source": {
+          "description": "Name from extracted data to use for the log entry.",
+          "title": "Source",
+          "type": "string"
+        }
+      }
+    },
+    "pipeline_stage_labels": {
+      "description": "",
+      "title": "Labels",
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": false,
+      "patternProperties": {
+        ".+": {
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "pipeline_stage_metrics": {
+      "description": "A map where the key is the name of the metric and the value is a specific metric type.",
+      "title": "Metrics",
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": false,
+      "patternProperties": {
+        ".*": {
+          "oneOf": [
+            {
+              "$ref": "#/definitions/todo"
+            },
+            {
+              "$ref": "#/definitions/todo"
+            },
+            {
+              "$ref": "#/definitions/todo"
+            }
+          ]
+        }
+      }
+    },
+    "pipeline_stage_tenant": {
+      "description": "",
+      "title": "Tenant",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {}
+    },
+    "pipeline_stage_replace": {
+      "description": "",
+      "title": "Replace",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {}
+    },
     "int": {
       "description": "Integer.",
       "title": "Integer",
@@ -497,6 +843,11 @@
     "labelvalue": {
       "description": "Label value.",
       "title": "Label Value",
+      "type": "string"
+    },
+    "filename": {
+      "description": "File name.",
+      "title": "File Name",
       "type": "string"
     }
   }
